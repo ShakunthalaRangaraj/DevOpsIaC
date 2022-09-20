@@ -23,8 +23,7 @@ resource "aws_instance" "webserver" {
     Project = "IAC"
   }
   
-provisioner "remote-exec" {command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ubuntu -i '${self.ipv4_address},' -e 'pub_key=ec2_ansible.pem' webapp.yml"}
-  
+
 }
 
 resource "aws_instance" "dbserver" {
