@@ -1,0 +1,8 @@
+[webservers]
+52.39.108.234
+
+[tomcatserver]
+34.211.45.101
+
+[postgressqlserver]
+34.219.26.184

@@ -1,0 +1,98 @@
+- name: Installing tomcat
+  hosts: tomcatserver
+  become: yes
+  become_user: root
+  tasks:
+    - name: Installing required java
+      apt:
+        name: default-jdk
+        state: latest
+    - name: Installing firewalld
+      apt:
+        name: firewalld
+        state: latest
+    - name: create directory for placing zip file
+      file:
+        path: /tmp/tomcat
+        state: directory
+        mode: 0777
+    - name: Downloading apache tomcat
+      get_url:
+        url: "https://archive.apache.org/dist/tomcat/tomcat-10/v10.0.21/bin/apache-tomcat-10.0.21.tar.gz"
+        dest: /tmp/tomcat
+    - name: Extracting tomcat
+      unarchive:
+        src: "/tmp/tomcat/apache-tomcat-10.0.21.tar.gz"
+        dest: /tmp/tomcat
+        remote_src: yes
+    - name: Create a directory for the tomcat file
+      file:
+        path: /usr/local/tomcat10
+        state: directory
+        mode: 0777
+    - name: Copying the tomcat file to the directory
+      copy:
+        src: "/tmp/tomcat/apache-tomcat-10.0.21"
+        dest: /usr/local/tomcat10
+        mode: 0777
+        remote_src: yes
+    - name: Adding "tomcat" group
+      group:
+        name: tomcat
+        state: present
+    - name: Adding "tomcat" user
+      user:
+        name: tomcat
+        group: tomcat
+        state: present
+        system: yes
+    - name: Changing ownership to user
+      file:
+        dest: /usr/local/tomcat10
+        owner: tomcat
+        group: tomcat
+        recurse: yes
+    - name: Creating a file tomcat.service
+      file:
+        path: /etc/systemd/system/tomcat.service
+        state: touch
+        mode: 0777
+    - name: Editing the file contents of tomcat.service
+      blockinfile:
+        path: /etc/systemd/system/tomcat.service
+        block: |
+          [Unit]
+          Description=Apache Tomcat Server
+          After=syslog.target network.target
+          [Service]
+          Type=forking
+          User=tomcat
+          Group=tomcat
+          Environment=CATALINA_PID=/usr/local/tomcat10/apache-tomcat-10.0.21/temp/tomcat.pid
+          Environment=CATALINA_HOME=/usr/local/tomcat10/apache-tomcat-10.0.21
+          Environment=CATALINA_BASE=/usr/local/tomcat10/apache-tomcat-10.0.21
+          ExecStart=/usr/local/tomcat10/apache-tomcat-10.0.21/bin/catalina.sh start
+          ExecStop=/usr/local/tomcat10/apache-tomcat-10.0.21/bin/catalina.sh stop
+          RestartSec=10
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+    - name: Restart service
+      systemd:
+        daemon_reload: yes
+    - name: Enabling port to run the services
+      firewalld:
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+    - name: Restarting the firewall
+      systemd:
+        name: firewalld
+        state: restarted
+        enabled: yes
+        masked: no
+    - name: Start and enable tomcat
+      service:
+        name: tomcat
+        state: started
+        enabled: yes

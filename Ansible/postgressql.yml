@@ -1,0 +1,107 @@
+---
+
+- name: Installing postgressql
+  hosts: postgressqlserver
+  become: yes
+  become_user: root
+  vars_files:
+    - postgresvars.yml
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+    - name: install prerequisites
+      apt:
+        name: "{{ item }}"
+        state: present
+      become: true
+      loop:
+        - libpq-dev
+        - postgresql
+        - postgresql-client
+        - postgresql-contrib
+        - python3
+        - python3-pip
+    - name: Install psycopg2 python module
+      ansible.builtin.pip:
+        name: psycopg2
+        state: latest
+    - name: checking for postgresql already Installed and the process running
+      shell: |
+        systemctl status postgresql | grep "active (running)" | grep -v grep | wc -l
+      register: grep_result
+    - name: Start and enable "{{ postgresql_servicename }}"
+      ansible.builtin.service:
+        name: "{{ postgresql_servicename }}"
+        state: started
+        enabled: yes
+    # configuring postgresql.conf file
+    - name: Change listen_addresses to all
+      lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: '^.*listen_addresses'
+        line: listen_addresses = '*'
+    - name: Expose port 5432
+      lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: '^#port = 5432'
+        line: port = 5432
+    # configuring pg_hba.conf file
+    - name: Replace peer with trust
+      replace:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        regexp: 'peer'
+        replace: "trust"
+    - name: Adding host configuration in the PostgreSQL Client Authentication Configuration File
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        insertafter: '^#.*TYPE.*DATABASE'
+        line: "host    all             all            0.0.0.0/0               trust"
+    - name: Adding host configuration in the PostgreSQL Client Authentication Configuration File
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        insertafter: '^#.*local.*Unix domain socket'
+        line: "local   all             all                                     trust"
+    - name: Adding host configuration in the PostgreSQL Client Authentication Configuration File
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        insertafter: '^.*#.*IPv4.*local'
+        line: "host   all             all             {{ ansible_eth0.ipv4.address.split('.')[0:1] | join('.') }}.0.0.1/0            trust"
+    - name: Adding host configuration in the PostgreSQL Client Authentication Configuration File
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        insertafter: '^.*#.*IPv4.*local'
+        line: "host   all             all             {{ ansible_eth0.ipv4.address }}/32            trust"
+    - name: Restart service postgre
+      ansible.builtin.service:
+        name: "{{ postgresql_servicename }}"
+        state: restarted
+
+   # creating a initial database
+    - name: Create user
+      postgresql_user:
+        name: "{{ db_user_name }}"
+        password: "{{ db_user_password }}"
+        role_attr_flags: SUPERUSER
+    - name: Create a new database with name "{{ db_name }}"
+      postgresql_db:
+        name: "{{ db_name }}"
+        owner: "{{ db_user_name }}"
+    - name: Create a new schema
+      postgresql_schema:
+        database: "{{ db_name }}"
+        name: "{{ db_name }}"
+        owner: "{{ db_user_name }}"
+    - name: GRANT ALL PRIVILEGES ON SCHEMA
+      postgresql_privs:
+        db: "{{ db_name }}"
+        privs: ALL
+        type: schema
+        objs: "{{ db_name }}"
+        role: "{{ db_user_name }}"
+    # return connect string
+    - name: connection string
+      ansible.builtin.debug:
+        msg: "connect string : jdbc:{{postgresql_servicename}}://{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] }}:{{port_no}}/{{ db_name }}"
+
