@@ -3,6 +3,10 @@
   become: yes
   become_user: root
   tasks:
+    - name: Upgrade all packages on servers
+      shell: sudo apt update --yes
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
     - name: Installing required java
       apt:
         name: default-jdk
