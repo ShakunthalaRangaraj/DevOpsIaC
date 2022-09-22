@@ -7,6 +7,10 @@
   vars_files:
     - vars/postgresvars.yml
   tasks:
+    - name: Upgrade all packages on servers
+      shell: sudo apt update --yes
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
     - name: Update and upgrade apt packages
       become: true
       apt:
