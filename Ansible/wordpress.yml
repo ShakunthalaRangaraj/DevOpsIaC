@@ -8,6 +8,10 @@
     - vars/defaults.yml
 
   tasks:
+    - name: Upgrade all packages on servers
+      shell: sudo apt update --yes
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
     - name: Install prerequisites
       apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
       tags: [ system ]
