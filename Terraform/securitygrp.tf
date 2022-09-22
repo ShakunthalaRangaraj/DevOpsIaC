@@ -16,13 +16,7 @@ ingress {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 }
-# SSH access from anywhere
-ingress {
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-}
+
 # Outbound Rules
 # Internet access to anywhere
 egress {
@@ -82,14 +76,7 @@ resource "aws_security_group_rule" "out_http_app" {
 
 #INGRESS RULES
 
-resource "aws_security_group_rule" "in_ssh_bastion_from_anywhere" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.web_sg.id
-}
+
 
 resource "aws_security_group_rule" "in_ssh_app_from_bastion" {
   type                     = "ingress"
