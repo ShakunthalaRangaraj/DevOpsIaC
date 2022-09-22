@@ -1,0 +1,7 @@
+---
+# defaults file for install_postgresql
+"port_no": "5432"
+"db_user_name": "root"
+"db_user_password": "root"
+"db_name": "TestDB"
+"postgresql_servicename": "postgresql"
