@@ -7,6 +7,7 @@
       apt:
         name: default-jdk
         state: latest
+      ignore_errors: true
     - name: Installing firewalld
       apt:
         name: firewalld
