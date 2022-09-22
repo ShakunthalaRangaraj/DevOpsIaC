@@ -1,8 +1,9 @@
-[webservers]
-52.39.108.234
-
+[4:17 PM] Rangaraj, Shakunthala
 [tomcatserver]
-34.211.45.101
+3.87.42.167
 
-[postgressqlserver]
-34.219.26.184
+[postgress]
+44.202.89.229
+
+[wordpress]
+54.234.135.128
