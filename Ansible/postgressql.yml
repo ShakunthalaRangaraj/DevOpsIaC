@@ -1,7 +1,7 @@
 ---
 
 - name: Installing postgressql
-  hosts: postgressqlserver
+  hosts: postgress
   become: yes
   become_user: root
   vars_files:
